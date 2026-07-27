@@ -193,7 +193,7 @@
 
   <!-- ===== Шаг 1: Приветствие ===== -->
   <div class="step active" id="step1">
-    <h1>Привет, что-то я давно не делал чего-нибудь эдакого, так что я решил чуть-чуть наговнокодить. Конечно, для того, чтобы пригласить тебя интересно провести время! Я знаю, как ты любишь планировать. Запланируешь со мной свидание?</h1>
+    <h1>Привет, что-то я давно не делал чего-нибудь эдакого, так что я решил чуть-чуть наговнокодить.<br>Конечно, для того, чтобы пригласить тебя интересно провести время!<br>Я знаю, как ты любишь планировать.<br>Запланируешь со мной свидание?</h1>
     <button class="btn btn-yes" id="btnYes">Да</button>
     <button class="btn btn-no" id="btnNo">Нет</button>
   </div>
@@ -345,6 +345,16 @@
       errorEl.textContent = 'Пожалуйста, заполни все поля 🙏';
       return;
     }
+
+    // Проверяем, что время окончания минимум на час позже времени начала
+    const startMinutes = timeToMinutes(timeStartVal);
+    const endMinutes = timeToMinutes(timeEndVal);
+
+    if (endMinutes - startMinutes < 60) {
+      errorEl.textContent = 'Время окончания должно быть как минимум на час позже времени начала ⏰';
+      return;
+    }
+
     errorEl.textContent = '';
 
     invitationAnswers.date = dateVal;
@@ -353,6 +363,12 @@
 
     goToStep('step3');
   });
+
+  // Переводит время формата "ЧЧ:ММ" в количество минут от начала суток
+  function timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
 
   // ===== Шаг 3: тип свидания =====
   document.getElementById('btnStep3Confirm').addEventListener('click', () => {
