@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Просим поисковики не индексировать и не переходить по ссылкам на этой странице -->
+<meta name="robots" content="noindex, nofollow">
+<title>Приглашение на свидание 💌</title>
+<style>
+  /* ===== Общие стили ===== */
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffe6f0 0%, #ffd6e8 45%, #ffc2dd 100%);
+    color: #5b3a4a;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .card {
+    background: #fffafd;
+    border-radius: 24px;
+    padding: 40px 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 45px rgba(255, 120, 170, 0.25);
+    position: relative;
+    text-align: center;
+  }
+
+  .step {
+    display: none;
+    animation: fadeIn 0.4s ease-in;
+  }
+
+  .step.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  h1, h2 {
+    color: #d6407c;
+    margin-top: 0;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    line-height: 1.5;
+  }
+
+  p.lead {
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  /* ===== Кнопки ===== */
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 28px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 10px 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-yes, .btn-primary {
+    background: linear-gradient(135deg, #ff8fb3, #ff6fa0);
+    color: white;
+    box-shadow: 0 8px 20px rgba(255, 111, 160, 0.4);
+  }
+
+  .btn-yes:hover, .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(255, 111, 160, 0.5);
+  }
+
+  .btn-no {
+    background: #fce4ec;
+    color: #b04870;
+    position: fixed; /* важно для "убегания" по всему экрану */
+    z-index: 50;
+  }
+
+  /* ===== Поля форм ===== */
+  .field-group {
+    text-align: left;
+    margin: 18px 0;
+  }
+
+  .field-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #b0466f;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid #ffd0e0;
+    font-size: 1rem;
+    font-family: inherit;
+    background: #fff5f9;
+    color: #5b3a4a;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: #ff8fb3;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .radio-option {
+    display: block;
+    text-align: left;
+    background: #fff5f9;
+    border: 2px solid #ffd8e6;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .radio-option:hover {
+    border-color: #ff8fb3;
+  }
+
+  .radio-option input {
+    margin-right: 10px;
+  }
+
+  .error-text {
+    color: #d6407c;
+    font-size: 0.9rem;
+    min-height: 1.2em;
+    margin-top: 4px;
+  }
+
+  /* ===== Звёзды ===== */
+  .stars {
+    font-size: 2.4rem;
+    margin: 14px 0;
+    user-select: none;
+  }
+
+  .star {
+    cursor: pointer;
+    color: #ffd6e6;
+    transition: color 0.15s ease, transform 0.1s ease;
+  }
+
+  .star.filled {
+    color: #ff5d8f;
+  }
+
+  .star:hover {
+    transform: scale(1.15);
+  }
+
+  .thanks {
+    font-size: 1.2rem;
+    color: #d6407c;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- ===== Шаг 1: Приветствие ===== -->
+  <div class="step active" id="step1">
+    <h1>Привет, что-то я давно не делал чего-нибудь эдакого, так что я решил чуть-чуть наговнокодить. Конечно, для того, чтобы пригласить тебя интересно провести время! Я знаю, как ты любишь планировать. Запланируешь со мной свидание?</h1>
+    <button class="btn btn-yes" id="btnYes">Да</button>
+    <button class="btn btn-no" id="btnNo">Нет</button>
+  </div>
+
+  <!-- ===== Шаг 2: Дата и время ===== -->
+  <div class="step" id="step2">
+    <h2>Когда пойдём?</h2>
+    <div class="field-group">
+      <label for="dateInput">Дата</label>
+      <input type="date" id="dateInput">
+    </div>
+    <div class="field-group">
+      <label for="timeStartInput">Время начала</label>
+      <input type="time" id="timeStartInput">
+    </div>
+    <div class="field-group">
+      <label for="timeEndInput">Время окончания</label>
+      <input type="time" id="timeEndInput">
+    </div>
+    <div class="error-text" id="step2Error"></div>
+    <button class="btn btn-primary" id="btnStep2Confirm">Подтвердить</button>
+  </div>
+
+  <!-- ===== Шаг 3: Тип свидания ===== -->
+  <div class="step" id="step3">
+    <h2>Что будем делать?</h2>
+    <label class="radio-option">
+      <input type="radio" name="dateType" value="home">
+      Что-то дома посмотреть
+    </label>
+    <label class="radio-option">
+      <input type="radio" name="dateType" value="outside">
+      Куда-то покататься
+    </label>
+    <div class="error-text" id="step3Error"></div>
+    <button class="btn btn-primary" id="btnStep3Confirm">Подтвердить</button>
+  </div>
+
+  <!-- ===== Шаг 4: Уточнение варианта ===== -->
+  <div class="step" id="step4">
+    <h2>Уточним детали</h2>
+    <div id="step4Options"></div>
+    <div class="error-text" id="step4Error"></div>
+    <button class="btn btn-primary" id="btnStep4Confirm">Подтвердить</button>
+  </div>
+
+  <!-- ===== Шаг 5: Оценка ===== -->
+  <div class="step" id="step5">
+    <p class="lead">(Прочитай голосом GLaDOS, так будет лучше) Ваше запланированное свидание запланировано! Поставьте оценку сервису планирования.</p>
+    <div class="stars" id="starsContainer">
+      <span class="star" data-value="1">★</span>
+      <span class="star" data-value="2">★</span>
+      <span class="star" data-value="3">★</span>
+      <span class="star" data-value="4">★</span>
+      <span class="star" data-value="5">★</span>
+    </div>
+    <div class="field-group">
+      <label for="commentInput">а тут можно оставить комментарий</label>
+      <textarea id="commentInput"></textarea>
+    </div>
+    <button class="btn btn-primary" id="btnSubmit">Отправить</button>
+  </div>
+
+  <!-- ===== Финальное сообщение ===== -->
+  <div class="step" id="stepThanks">
+    <p class="thanks">Спасибо! Ответы сохранены 💗</p>
+  </div>
+
+</div>
+
+<script>
+  // Объект, в котором постепенно накапливаются ответы пользователя
+  const invitationAnswers = {};
+
+  // ===== Вспомогательная функция переключения шагов =====
+  function goToStep(stepId) {
+    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  // ===== Шаг 1: логика кнопок "Да" / "Нет" =====
+  document.getElementById('btnYes').addEventListener('click', () => {
+    goToStep('step2');
+  });
+
+  const btnNo = document.getElementById('btnNo');
+
+  // При наведении курсора кнопка "Нет" мгновенно телепортируется
+  // в случайное место, не перекрывая текст и кнопку "Да"
+  btnNo.addEventListener('mouseenter', relocateNoButton);
+  // На случай touch-устройств — тоже уворачиваемся при касании рядом
+  btnNo.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    relocateNoButton();
+  });
+
+  btnNo.addEventListener('click', () => {
+    // Ничего не происходит — просто следующая попытка поймать кнопку
+  });
+
+  function relocateNoButton() {
+    const title = document.querySelector('#step1 h1');
+    const btnYesEl = document.getElementById('btnYes');
+
+    const titleRect = title.getBoundingClientRect();
+    const yesRect = btnYesEl.getBoundingClientRect();
+
+    const noWidth = btnNo.offsetWidth || 90;
+    const noHeight = btnNo.offsetHeight || 48;
+
+    const maxX = Math.max(0, window.innerWidth - noWidth);
+    const maxY = Math.max(0, window.innerHeight - noHeight);
+
+    let x, y, attempts = 0;
+    const padding = 16; // небольшой запас вокруг запретных зон
+
+    do {
+      x = Math.random() * maxX;
+      y = Math.random() * maxY;
+      attempts++;
+    } while (
+      attempts < 60 &&
+      (rectsOverlap(x, y, noWidth, noHeight, titleRect, padding) ||
+       rectsOverlap(x, y, noWidth, noHeight, yesRect, padding))
+    );
+
+    btnNo.style.left = x + 'px';
+    btnNo.style.top = y + 'px';
+  }
+
+  // Проверка пересечения прямоугольника кнопки "Нет" с запретной зоной
+  function rectsOverlap(x, y, w, h, forbiddenRect, padding) {
+    return !(
+      x + w < forbiddenRect.left - padding ||
+      x > forbiddenRect.right + padding ||
+      y + h < forbiddenRect.top - padding ||
+      y > forbiddenRect.bottom + padding
+    );
+  }
+
+  // ===== Шаг 2: дата и время =====
+  document.getElementById('btnStep2Confirm').addEventListener('click', () => {
+    const dateVal = document.getElementById('dateInput').value;
+    const timeStartVal = document.getElementById('timeStartInput').value;
+    const timeEndVal = document.getElementById('timeEndInput').value;
+    const errorEl = document.getElementById('step2Error');
+
+    if (!dateVal || !timeStartVal || !timeEndVal) {
+      errorEl.textContent = 'Пожалуйста, заполни все поля 🙏';
+      return;
+    }
+    errorEl.textContent = '';
+
+    invitationAnswers.date = dateVal;
+    invitationAnswers.timeStart = timeStartVal;
+    invitationAnswers.timeEnd = timeEndVal;
+
+    goToStep('step3');
+  });
+
+  // ===== Шаг 3: тип свидания =====
+  document.getElementById('btnStep3Confirm').addEventListener('click', () => {
+    const selected = document.querySelector('input[name="dateType"]:checked');
+    const errorEl = document.getElementById('step3Error');
+
+    if (!selected) {
+      errorEl.textContent = 'Выбери один из вариантов 🙏';
+      return;
+    }
+    errorEl.textContent = '';
+
+    invitationAnswers.dateType = selected.value; // "home" или "outside"
+    buildStep4Options();
+    goToStep('step4');
+  });
+
+  // ===== Шаг 4: динамические варианты =====
+  function buildStep4Options() {
+    const container = document.getElementById('step4Options');
+    container.innerHTML = '';
+
+    let options = [];
+    let title = '';
+
+    if (invitationAnswers.dateType === 'home') {
+      title = 'Что смотрим?';
+      options = [
+        'Сайки Кусуо',
+        'Чистая романтика))',
+        'Ангельские ритмы',
+        'Кавбой Бибоп',
+        'Уэнсдей'
+      ];
+    } else {
+      // Определяем день недели по выбранной дате
+      const chosenDate = new Date(invitationAnswers.date);
+      const day = chosenDate.getDay(); // 0 - воскресенье, 6 - суббота
+
+      if (day === 0 || day === 6) {
+        title = 'Куда именно?';
+        options = [
+          'Шашлыки на даче',
+          'Малибу (кататься на лодочке)',
+          'К Лёше и Паше'
+        ];
+      } else {
+        title = 'Куда именно?';
+        options = [
+          'Роскошный ресторан быстрого питания БК',
+          'Великолепная баблтишная Micha',
+          'Выберем вместе новое место'
+        ];
+      }
+    }
+
+    const heading = document.createElement('h2');
+    heading.textContent = title;
+    container.appendChild(heading);
+
+    options.forEach((optionText, index) => {
+      const label = document.createElement('label');
+      label.className = 'radio-option';
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'step4Option';
+      input.value = optionText;
+      if (index === 0) input.id = 'firstStep4Option';
+
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + optionText));
+      container.appendChild(label);
+    });
+  }
+
+  document.getElementById('btnStep4Confirm').addEventListener('click', () => {
+    const selected = document.querySelector('input[name="step4Option"]:checked');
+    const errorEl = document.getElementById('step4Error');
+
+    if (!selected) {
+      errorEl.textContent = 'Выбери один из вариантов 🙏';
+      return;
+    }
+    errorEl.textContent = '';
+
+    invitationAnswers.specificChoice = selected.value;
+    goToStep('step5');
+  });
+
+  // ===== Шаг 5: звёзды и комментарий =====
+  let currentRating = 0;
+  const starEls = document.querySelectorAll('.star');
+
+  starEls.forEach(star => {
+    star.addEventListener('click', () => {
+      currentRating = parseInt(star.dataset.value, 10);
+      updateStars();
+    });
+    star.addEventListener('mouseenter', () => {
+      previewStars(parseInt(star.dataset.value, 10));
+    });
+  });
+
+  document.getElementById('starsContainer').addEventListener('mouseleave', updateStars);
+
+  function updateStars() {
+    starEls.forEach(star => {
+      const val = parseInt(star.dataset.value, 10);
+      star.classList.toggle('filled', val <= currentRating);
+    });
+  }
+
+  function previewStars(hoverValue) {
+    starEls.forEach(star => {
+      const val = parseInt(star.dataset.value, 10);
+      star.classList.toggle('filled', val <= hoverValue);
+    });
+  }
+
+  // ===== Отправка и сохранение в localStorage =====
+  document.getElementById('btnSubmit').addEventListener('click', () => {
+    invitationAnswers.rating = currentRating;
+    invitationAnswers.comment = document.getElementById('commentInput').value;
+    invitationAnswers.submittedAt = new Date().toISOString(); // дата/время заполнения
+
+    saveAnswers(invitationAnswers);
+    goToStep('stepThanks');
+  });
+
+  // Сохраняем каждый новый ответ отдельно, не перетирая предыдущие
+  function saveAnswers(answers) {
+    let allData = [];
+    try {
+      const existing = localStorage.getItem('invitationData');
+      if (existing) {
+        allData = JSON.parse(existing);
+        if (!Array.isArray(allData)) {
+          allData = [];
+        }
+      }
+    } catch (e) {
+      allData = [];
+    }
+
+    allData.push(answers);
+    localStorage.setItem('invitationData', JSON.stringify(allData));
+  }
+</script>
+
+</body>
+</html>

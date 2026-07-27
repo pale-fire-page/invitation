@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Просим поисковики не индексировать и не переходить по ссылкам на этой странице -->
+<meta name="robots" content="noindex, nofollow">
+<title>Результаты приглашений 💗</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffe6f0 0%, #ffd6e8 45%, #ffc2dd 100%);
+    color: #5b3a4a;
+    padding: 40px 20px;
+  }
+
+  .wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    text-align: center;
+    color: #d6407c;
+    margin-bottom: 30px;
+  }
+
+  .layout {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .list-panel {
+    flex: 1 1 260px;
+    background: #fffafd;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 14px 30px rgba(255, 120, 170, 0.2);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .list-panel h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: #b0466f;
+  }
+
+  .entry-item {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 2px solid #ffd8e6;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    background: #fff5f9;
+  }
+
+  .entry-item:hover, .entry-item.active {
+    border-color: #ff8fb3;
+    background: #ffe9f2;
+  }
+
+  .entry-item .entry-title {
+    font-weight: 600;
+    color: #d6407c;
+    margin-bottom: 2px;
+  }
+
+  .entry-item .entry-sub {
+    font-size: 0.85rem;
+    color: #8a5c6f;
+  }
+
+  .detail-panel {
+    flex: 1 1 320px;
+    background: #fffafd;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 14px 30px rgba(255, 120, 170, 0.2);
+  }
+
+  .detail-panel h2 {
+    margin-top: 0;
+    color: #b0466f;
+  }
+
+  .detail-row {
+    margin: 12px 0;
+  }
+
+  .detail-label {
+    font-weight: 600;
+    color: #b0466f;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .detail-value {
+    color: #5b3a4a;
+  }
+
+  .stars-readonly {
+    font-size: 1.4rem;
+    color: #ffd6e6;
+  }
+
+  .stars-readonly .filled {
+    color: #ff5d8f;
+  }
+
+  .empty-message {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #b0466f;
+    padding: 40px 0;
+  }
+
+  .placeholder-text {
+    color: #b98ca0;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <h1>Ответы на приглашение 💌</h1>
+
+  <div id="emptyState" class="empty-message" style="display:none;">
+    Пока никто не ответил
+  </div>
+
+  <div class="layout" id="dataLayout" style="display:none;">
+    <div class="list-panel">
+      <h2>Все заполнения</h2>
+      <div id="entriesList"></div>
+    </div>
+    <div class="detail-panel">
+      <h2>Детали</h2>
+      <div id="detailsContent">
+        <p class="placeholder-text">Выбери заполнение слева, чтобы увидеть подробности</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Подписи для отображения типа свидания
+  const dateTypeLabels = {
+    home: 'Что-то дома посмотреть',
+    outside: 'Куда-то покататься'
+  };
+
+  // Загружаем данные из localStorage
+  let allEntries = [];
+  try {
+    const raw = localStorage.getItem('invitationData');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        allEntries = parsed;
+      }
+    }
+  } catch (e) {
+    allEntries = [];
+  }
+
+  const emptyState = document.getElementById('emptyState');
+  const dataLayout = document.getElementById('dataLayout');
+  const entriesList = document.getElementById('entriesList');
+  const detailsContent = document.getElementById('detailsContent');
+
+  if (allEntries.length === 0) {
+    emptyState.style.display = 'block';
+  } else {
+    dataLayout.style.display = 'flex';
+    renderEntriesList();
+  }
+
+  // Отрисовываем список всех заполнений (дата и время ответа)
+  function renderEntriesList() {
+    entriesList.innerHTML = '';
+
+    allEntries.forEach((entry, index) => {
+      const item = document.createElement('div');
+      item.className = 'entry-item';
+      item.dataset.index = index;
+
+      const title = document.createElement('div');
+      title.className = 'entry-title';
+      title.textContent = formatSubmittedAt(entry.submittedAt);
+
+      const sub = document.createElement('div');
+      sub.className = 'entry-sub';
+      sub.textContent = entry.dateType ? dateTypeLabels[entry.dateType] || entry.dateType : '';
+
+      item.appendChild(title);
+      item.appendChild(sub);
+
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.entry-item').forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+        showDetails(entry);
+      });
+
+      entriesList.appendChild(item);
+    });
+  }
+
+  // Форматируем дату/время заполнения для читаемого вида
+  function formatSubmittedAt(isoString) {
+    if (!isoString) return 'Без даты заполнения';
+    const d = new Date(isoString);
+    return d.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Показываем подробности выбранного заполнения
+  function showDetails(entry) {
+    detailsContent.innerHTML = '';
+
+    detailsContent.appendChild(makeDetailRow('Заполнено', formatSubmittedAt(entry.submittedAt)));
+    detailsContent.appendChild(makeDetailRow('Дата свидания', entry.date || '—'));
+    detailsContent.appendChild(makeDetailRow('Время начала', entry.timeStart || '—'));
+    detailsContent.appendChild(makeDetailRow('Время окончания', entry.timeEnd || '—'));
+    detailsContent.appendChild(makeDetailRow('Тип свидания', entry.dateType ? (dateTypeLabels[entry.dateType] || entry.dateType) : '—'));
+    detailsContent.appendChild(makeDetailRow('Выбранный вариант', entry.specificChoice || '—'));
+    detailsContent.appendChild(makeStarsRow('Оценка', entry.rating || 0));
+    detailsContent.appendChild(makeDetailRow('Комментарий', entry.comment ? entry.comment : '—'));
+  }
+
+  function makeDetailRow(label, value) {
+    const row = document.createElement('div');
+    row.className = 'detail-row';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'detail-label';
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('span');
+    valueEl.className = 'detail-value';
+    valueEl.textContent = value;
+
+    row.appendChild(labelEl);
+    row.appendChild(valueEl);
+    return row;
+  }
+
+  function makeStarsRow(label, ratingValue) {
+    const row = document.createElement('div');
+    row.className = 'detail-row';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'detail-label';
+    labelEl.textContent = label;
+
+    const starsEl = document.createElement('span');
+    starsEl.className = 'stars-readonly';
+
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.textContent = '★';
+      if (i <= ratingValue) star.classList.add('filled');
+      starsEl.appendChild(star);
+    }
+
+    row.appendChild(labelEl);
+    row.appendChild(starsEl);
+    return row;
+  }
+</script>
+
+</body>
+</html>
