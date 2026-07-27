@@ -255,6 +255,7 @@
       <textarea id="commentInput"></textarea>
     </div>
     <button class="btn btn-primary" id="btnSubmit">Отправить</button>
+    <div class="error-text" id="step5Error"></div>
   </div>
 
   <!-- ===== Финальное сообщение ===== -->
@@ -265,6 +266,12 @@
 </div>
 
 <script>
+  // ===== Настройки общего облачного хранилища jsonbin.io =====
+  // Вставь сюда свои значения из личного кабинета jsonbin.io
+  const JSONBIN_BIN_ID = '6a67eefff5f4af5e29ca76eb';
+  const JSONBIN_API_KEY = '$2a$10$ivQkZvPMX933pmaT9CO2lO1JFeGJKobRnux2nABaqMnDMXd5iBMBu';
+  const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
   // Объект, в котором постепенно накапливаются ответы пользователя
   const invitationAnswers = {};
 
@@ -489,33 +496,59 @@
     });
   }
 
-  // ===== Отправка и сохранение в localStorage =====
-  document.getElementById('btnSubmit').addEventListener('click', () => {
+  // ===== Отправка и сохранение в общее облачное хранилище =====
+  const btnSubmit = document.getElementById('btnSubmit');
+  const step5Error = document.getElementById('step5Error');
+
+  btnSubmit.addEventListener('click', async () => {
     invitationAnswers.rating = currentRating;
     invitationAnswers.comment = document.getElementById('commentInput').value;
     invitationAnswers.submittedAt = new Date().toISOString(); // дата/время заполнения
 
-    saveAnswers(invitationAnswers);
-    goToStep('stepThanks');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Отправляем...';
+    step5Error.textContent = '';
+
+    try {
+      await saveAnswers(invitationAnswers);
+      goToStep('stepThanks');
+    } catch (e) {
+      step5Error.textContent = 'Не получилось отправить ответы 😔 Проверь интернет и попробуй ещё раз.';
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Отправить';
+    }
   });
 
-  // Сохраняем каждый новый ответ отдельно, не перетирая предыдущие
-  function saveAnswers(answers) {
+  // Сохраняем ответ в общий бин на jsonbin.io, не перетирая предыдущие ответы:
+  // сначала читаем текущий список, добавляем новый ответ, записываем обратно.
+  async function saveAnswers(answers) {
     let allData = [];
-    try {
-      const existing = localStorage.getItem('invitationData');
-      if (existing) {
-        allData = JSON.parse(existing);
-        if (!Array.isArray(allData)) {
-          allData = [];
-        }
+
+    const readResponse = await fetch(`${JSONBIN_URL}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+
+    if (readResponse.ok) {
+      const readData = await readResponse.json();
+      if (readData.record && Array.isArray(readData.record.entries)) {
+        allData = readData.record.entries;
       }
-    } catch (e) {
-      allData = [];
     }
 
     allData.push(answers);
-    localStorage.setItem('invitationData', JSON.stringify(allData));
+
+    const writeResponse = await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify({ entries: allData })
+    });
+
+    if (!writeResponse.ok) {
+      throw new Error('jsonbin write failed');
+    }
   }
 </script>
 

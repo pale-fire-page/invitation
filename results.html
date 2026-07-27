@@ -200,6 +200,14 @@
 <div class="wrapper">
   <h1>Ответы на приглашение 💌</h1>
 
+  <div id="loadingState" class="empty-message">
+    Загружаем ответы...
+  </div>
+
+  <div id="errorState" class="empty-message" style="display:none;">
+    Не получилось загрузить ответы 😔 Проверь интернет и обнови страницу.
+  </div>
+
   <div id="emptyState" class="empty-message" style="display:none;">
     Пока никто не ответил
   </div>
@@ -219,36 +227,60 @@
 </div>
 
 <script>
+  // ===== Настройки общего облачного хранилища jsonbin.io =====
+  // Должны совпадать со значениями в invitation.html
+  const JSONBIN_BIN_ID = '6a67eefff5f4af5e29ca76eb';
+  const JSONBIN_API_KEY = '$2a$10$ivQkZvPMX933pmaT9CO2lO1JFeGJKobRnux2nABaqMnDMXd5iBMBu';
+  const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
   // Подписи для отображения типа свидания
   const dateTypeLabels = {
     home: 'Что-то дома посмотреть',
     outside: 'Куда-то покататься'
   };
 
-  // Загружаем данные из localStorage
   let allEntries = [];
-  try {
-    const raw = localStorage.getItem('invitationData');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        allEntries = parsed;
-      }
-    }
-  } catch (e) {
-    allEntries = [];
-  }
 
+  const loadingState = document.getElementById('loadingState');
+  const errorState = document.getElementById('errorState');
   const emptyState = document.getElementById('emptyState');
   const dataLayout = document.getElementById('dataLayout');
   const entriesList = document.getElementById('entriesList');
   const detailsContent = document.getElementById('detailsContent');
 
-  if (allEntries.length === 0) {
-    emptyState.style.display = 'block';
-  } else {
-    dataLayout.style.display = 'flex';
-    renderEntriesList();
+  loadEntries();
+
+  // Загружаем данные из общего хранилища jsonbin.io
+  async function loadEntries() {
+    loadingState.style.display = 'block';
+    errorState.style.display = 'none';
+    emptyState.style.display = 'none';
+    dataLayout.style.display = 'none';
+
+    try {
+      const response = await fetch(`${JSONBIN_URL}/latest`, {
+        headers: { 'X-Master-Key': JSONBIN_API_KEY }
+      });
+
+      if (!response.ok) {
+        throw new Error('jsonbin read failed');
+      }
+
+      const data = await response.json();
+      allEntries = (data.record && Array.isArray(data.record.entries)) ? data.record.entries : [];
+
+      loadingState.style.display = 'none';
+
+      if (allEntries.length === 0) {
+        emptyState.style.display = 'block';
+      } else {
+        dataLayout.style.display = 'flex';
+        renderEntriesList();
+      }
+    } catch (e) {
+      loadingState.style.display = 'none';
+      errorState.style.display = 'block';
+    }
   }
 
   // Отрисовываем список всех заполнений (дата и время ответа)
@@ -320,30 +352,56 @@
     });
   }
 
-  // Сохраняем текущее состояние массива обратно в localStorage
-  function persistEntries() {
-    localStorage.setItem('invitationData', JSON.stringify(allEntries));
+  // Сохраняем текущее состояние массива обратно в jsonbin.io
+  async function persistEntries() {
+    const response = await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify({ entries: allEntries })
+    });
+
+    if (!response.ok) {
+      throw new Error('jsonbin write failed');
+    }
   }
 
   // Переключаем статус "прочитано" у записи
-  function toggleRead(entry) {
+  async function toggleRead(entry) {
+    const previousValue = entry.read;
     entry.read = !entry.read;
-    persistEntries();
-    renderEntriesList();
+    renderEntriesList(); // мгновенный отклик в интерфейсе
+
+    try {
+      await persistEntries();
+    } catch (e) {
+      entry.read = previousValue; // откатываем при ошибке сети
+      renderEntriesList();
+      alert('Не получилось сохранить изменения 😔 Проверь интернет.');
+    }
   }
 
   // Удаляем запись после подтверждения
-  function deleteEntry(entry) {
+  async function deleteEntry(entry) {
     const confirmed = confirm('Удалить эту запись? Это действие необратимо.');
     if (!confirmed) return;
 
     const idx = allEntries.indexOf(entry);
-    if (idx !== -1) {
-      allEntries.splice(idx, 1);
-    }
-    persistEntries();
+    if (idx === -1) return;
 
-    // Если удалили запись, которая сейчас открыта в деталях — очищаем панель
+    const removed = allEntries.splice(idx, 1)[0];
+
+    try {
+      await persistEntries();
+    } catch (e) {
+      allEntries.splice(idx, 0, removed); // возвращаем запись обратно при ошибке
+      alert('Не получилось удалить запись 😔 Проверь интернет.');
+      return;
+    }
+
+    // Очищаем панель деталей, если удалённая запись была открыта
     detailsContent.innerHTML = '<p class="placeholder-text">Выбери заполнение слева, чтобы увидеть подробности</p>';
 
     if (allEntries.length === 0) {
