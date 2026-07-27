@@ -54,11 +54,13 @@
   }
 
   .entry-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 12px 14px;
     border-radius: 12px;
     border: 2px solid #ffd8e6;
     margin-bottom: 10px;
-    cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
     background: #fff5f9;
   }
@@ -68,15 +70,79 @@
     background: #ffe9f2;
   }
 
+  .entry-main {
+    flex: 1 1 auto;
+    cursor: pointer;
+    min-width: 0;
+  }
+
   .entry-item .entry-title {
     font-weight: 600;
     color: #d6407c;
     margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
   .entry-item .entry-sub {
     font-size: 0.85rem;
     color: #8a5c6f;
+  }
+
+  /* Непрочитанные записи выделяем розовой точкой */
+  .unread-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff5d8f;
+    flex-shrink: 0;
+  }
+
+  .entry-item.is-read .entry-title {
+    color: #b98ca0;
+    font-weight: 500;
+  }
+
+  .entry-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
+    border: none;
+    background: #ffe9f2;
+    color: #b0466f;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .icon-btn:hover {
+    transform: scale(1.08);
+  }
+
+  .read-btn.is-active {
+    background: #d6f5df;
+    color: #2f9e55;
+  }
+
+  .read-btn:hover {
+    background: #d6f5df;
+    color: #2f9e55;
+  }
+
+  .delete-btn:hover {
+    background: #ffd6d6;
+    color: #c0392b;
   }
 
   .detail-panel {
@@ -189,30 +255,103 @@
   function renderEntriesList() {
     entriesList.innerHTML = '';
 
-    allEntries.forEach((entry, index) => {
+    allEntries.forEach((entry) => {
       const item = document.createElement('div');
       item.className = 'entry-item';
-      item.dataset.index = index;
+      if (entry.read) item.classList.add('is-read');
+
+      // --- Кликабельная часть (заголовок + подзаголовок), открывает детали ---
+      const main = document.createElement('div');
+      main.className = 'entry-main';
 
       const title = document.createElement('div');
       title.className = 'entry-title';
-      title.textContent = formatSubmittedAt(entry.submittedAt);
+
+      if (!entry.read) {
+        const dot = document.createElement('span');
+        dot.className = 'unread-dot';
+        dot.title = 'Непрочитано';
+        title.appendChild(dot);
+      }
+      title.appendChild(document.createTextNode(formatSubmittedAt(entry.submittedAt)));
 
       const sub = document.createElement('div');
       sub.className = 'entry-sub';
       sub.textContent = entry.dateType ? dateTypeLabels[entry.dateType] || entry.dateType : '';
 
-      item.appendChild(title);
-      item.appendChild(sub);
+      main.appendChild(title);
+      main.appendChild(sub);
 
-      item.addEventListener('click', () => {
+      main.addEventListener('click', () => {
         document.querySelectorAll('.entry-item').forEach(el => el.classList.remove('active'));
         item.classList.add('active');
         showDetails(entry);
       });
 
+      // --- Кнопки действий: отметить прочитанным и удалить ---
+      const actions = document.createElement('div');
+      actions.className = 'entry-actions';
+
+      const readBtn = document.createElement('button');
+      readBtn.className = 'icon-btn read-btn';
+      if (entry.read) readBtn.classList.add('is-active');
+      readBtn.textContent = '✓';
+      readBtn.title = entry.read ? 'Отметить как непрочитанное' : 'Отметить как прочитанное';
+      readBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleRead(entry);
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'icon-btn delete-btn';
+      deleteBtn.textContent = '🗑';
+      deleteBtn.title = 'Удалить запись';
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteEntry(entry);
+      });
+
+      actions.appendChild(readBtn);
+      actions.appendChild(deleteBtn);
+
+      item.appendChild(main);
+      item.appendChild(actions);
       entriesList.appendChild(item);
     });
+  }
+
+  // Сохраняем текущее состояние массива обратно в localStorage
+  function persistEntries() {
+    localStorage.setItem('invitationData', JSON.stringify(allEntries));
+  }
+
+  // Переключаем статус "прочитано" у записи
+  function toggleRead(entry) {
+    entry.read = !entry.read;
+    persistEntries();
+    renderEntriesList();
+  }
+
+  // Удаляем запись после подтверждения
+  function deleteEntry(entry) {
+    const confirmed = confirm('Удалить эту запись? Это действие необратимо.');
+    if (!confirmed) return;
+
+    const idx = allEntries.indexOf(entry);
+    if (idx !== -1) {
+      allEntries.splice(idx, 1);
+    }
+    persistEntries();
+
+    // Если удалили запись, которая сейчас открыта в деталях — очищаем панель
+    detailsContent.innerHTML = '<p class="placeholder-text">Выбери заполнение слева, чтобы увидеть подробности</p>';
+
+    if (allEntries.length === 0) {
+      dataLayout.style.display = 'none';
+      emptyState.style.display = 'block';
+    } else {
+      renderEntriesList();
+    }
   }
 
   // Форматируем дату/время заполнения для читаемого вида
